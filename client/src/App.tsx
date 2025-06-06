@@ -6,6 +6,7 @@ import { useState } from 'react'
 
 function App() {
   const [socket, setSocket] = useState<WebSocket | null>(null)
+  const [playerId, setPlayerId] = useState(-1)
 
   function initWebSocket(roomId: number): WebSocket {
     if (socket && socket.readyState !== WebSocket.CLOSED) {
@@ -29,8 +30,10 @@ function App() {
     
     function onMessage(e: MessageEvent<any>) {
       if (e.data instanceof ArrayBuffer) {
-        const view = new DataView(e.data)
-        console.log(view.getUint8)
+        const message = decodeMessage(e.data)
+        if (message.type === 1) {
+            setPlayerId(message.playerId)
+        }
         console.log("od servera binary")
       } else {
         console.log(e.type + ': '  + e.data);
@@ -51,18 +54,57 @@ function App() {
       return (128 + roomId * 8)
     }
 
-    function createMoveMessage(roomId: number, move: number) {
+    function decodeMessage(data: ArrayBuffer): {
+        playerId: number, type: number, x: number, y: number, velocity: number
+    } {
+        let playerId = 0
+        let type = 0
+        let x = 0
+        let y = 0
+        let value = 0
+        const buffer = new Uint32Array(data)
 
+        if (buffer.length === 1) {
+            const view = new DataView(data);
+            value = view.getUint32(0, true)
+            console.log("Parsed uint32:", value)
+        } else {
+            console.warn("Unexpected byte length", buffer.length)
+        }
+      
+        if (value >= 16777216) {
+            playerId = Math.floor(value / 16777216)
+            value -= playerId * 16777216
+        }
+        if (value >= 8388608) {
+            type = 1
+            value -= 8388608
+        }
+        if (value >= 16384) {
+            x = Math.floor(value / 16384)
+            value -= x * 16384
+        }
+        if (value >= 32) {
+            y = Math.floor(value / 32)
+            value -= y * 32
+        }
+        const velocity = value
+
+        return {playerId, type, x, y, velocity}
     }
 
+
+    setSocket(ws)
     return ws
   }
+
+
 
   return (
     <BrowserRouter>
       <Routes>
         <Route index element={<Menu initWebSocket={initWebSocket} />} />
-        <Route path='race' element={<Game socket={socket}/>} />
+        <Route path='race' element={<Game socket={socket} playerId={playerId} />} />
       </Routes>
 
     </BrowserRouter>
