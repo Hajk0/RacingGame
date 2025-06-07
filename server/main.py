@@ -1,6 +1,8 @@
 from autobahn.twisted.websocket import WebSocketServerProtocol, WebSocketServerFactory
 from Game import Game
 
+MAX_VELOCITY = 31
+
 class MyServerProtocol(WebSocketServerProtocol):
     clients = set()
     games = {}
@@ -13,6 +15,8 @@ class MyServerProtocol(WebSocketServerProtocol):
         self.x = 0
         self.y = 0
         self.playerId = None
+        self.velocity = 0
+        self.angle = 0
 
 
     def onConnect(self, request):
@@ -34,14 +38,18 @@ class MyServerProtocol(WebSocketServerProtocol):
                     MyServerProtocol.games[decoded_values[2]] = Game(decoded_values[2])
                 self.game = MyServerProtocol.games[decoded_values[2]]
                 self.game.add_player(self)
+            else:
+                self.updatePosition(move=decoded_values[3]) # receive move
+                
+
             print(f"decoded values:\ntype: {decoded_values[1]}\nroomId: {decoded_values[2]}\nmove: {decoded_values[3]}")
             
         else:
             print("Text message received: {0}".format(payload.decode('utf8')))
 
         # send message with new playerId
-        payload = self.createMessage(self.playerId, 1, 0, 0, 0)
-        self.sendMessage(payload, isBinary)
+        #payload = self.createMessage(self.playerId, 0, 1, 0, 0, 0)
+        #self.sendMessage(payload, isBinary)
 
     def onClose(self, wasClean, code, reason):
         MyServerProtocol.clients.discard(self)
@@ -66,10 +74,20 @@ class MyServerProtocol(WebSocketServerProtocol):
         move = byte_value
         return (playerId, type, roomId, move)
 
-    def createMessage(self, playerId, type, x, y, velocity):
-        integerValue = playerId * 16777216 + type * 8388608 + x * 16384 + y * 32 + velocity
-        payload = integerValue.to_bytes(4, byteorder='little')
+    def createMessage(self, playerId, angle, type, x, y, velocity):
+        integerValue = playerId * (256 * 256 * 256 * 256) + angle * 16777216 + type * 8388608 + x * 16384 + y * 32 + velocity
+        print("integerValue:", integerValue)
+        payload = integerValue.to_bytes(5, byteorder='little')
         return payload
+
+    def updatePosition(self, move):
+        if move == 0:
+            self.y += self.velocity
+            self.increaseVelocity()
+
+    def increaseVelocity(self):
+        self.velocity = min(MAX_VELOCITY, self.velocity + 1)
+
 
 def game_loop():
     for game in MyServerProtocol.games.values():
