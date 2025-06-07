@@ -36,27 +36,28 @@ function App() {
                 if (message.type === 1) {
                     setPlayerId(message.playerId)
                 } else {
-                    /*setCars([
-                        ...cars,
-                        {
+                    let found = false
+                    cars.current.forEach((car) => {
+                        
+                        if (car.id === message.playerId) {
+                            found = true
+                            car.angle = message.angle
+                            car.x = message.x
+                            car.y = message.y
+                            car.velocity = message.velocity
+                            console.log("Modify Car")
+                        }
+                    })
+                    if (!found) {
+                        cars.current.push({
                             id: message.playerId,
                             angle: message.angle,
                             x: message.x,
                             y: message.y,
                             velocity: message.velocity,
-                        }
-                    ])*/
-                    cars.current = [
-                        ...cars.current,
-                        {
-                            id: message.playerId,
-                            angle: message.angle,
-                            x: message.x,
-                            y: message.y,
-                            velocity: message.velocity,
-                        }
-                    ]
-                    console.log("Add Car")
+                        })
+                        console.log("Add Car")
+                    }
                 }
                 console.log("od servera binary")
             } else {

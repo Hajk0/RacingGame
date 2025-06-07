@@ -14,8 +14,8 @@ class MyServerProtocol(WebSocketServerProtocol):
         super().__init__()
         self.roomId = None
         self.game = None
-        self.x = 0
-        self.y = 0
+        self.x = 300
+        self.y = 300
         self.playerId = None
         self.velocity = 0
         self.angle = 0.0
@@ -115,7 +115,7 @@ if __name__ == '__main__':
     factory = WebSocketServerFactory("ws://0.0.0.0:8000/ws")
     factory.protocol = MyServerProtocol
     lc = LoopingCall(game_loop)
-    lc.start(1)
+    lc.start(0.2)
     reactor.listenTCP(8000, factory)
     reactor.run()
     
