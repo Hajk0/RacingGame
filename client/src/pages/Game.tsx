@@ -13,21 +13,6 @@ function Game(
     { socket: WebSocket | null, playerId: number, cars: RefObject<CarState[]> },
 ) {
     const canvasRef = useRef<HTMLCanvasElement>(null)
-    //const carsRef = useRef<CarState[]>(cars)
-
-    /*useEffect(() => {
-        if (!socket) {
-            console.warn('No WebSocket connection')
-            return;
-        }
-        return () => {
-            //socket.close()
-        }
-    }, []);*/
-
-    /*useEffect(() => {
-        cars.current = cars
-    }, [cars])*/
 
     useEffect(() => {
         const canvas = canvasRef.current
@@ -61,7 +46,7 @@ function Game(
         }
 
         draw()
-    }, [cars])
+    }, [])
 
     function createMoveMessage(playerId: number, roomId: number, moveCode: number) {
         return (playerId * 256 + roomId * 8 + moveCode)

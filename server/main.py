@@ -1,7 +1,9 @@
+import math
 from autobahn.twisted.websocket import WebSocketServerProtocol, WebSocketServerFactory
 from Game import Game
 
 MAX_VELOCITY = 31
+MIN_VELOCITY = 0
 
 class MyServerProtocol(WebSocketServerProtocol):
     clients = set()
@@ -16,7 +18,7 @@ class MyServerProtocol(WebSocketServerProtocol):
         self.y = 0
         self.playerId = None
         self.velocity = 0
-        self.angle = 0
+        self.angle = 0.0
 
 
     def onConnect(self, request):
@@ -39,17 +41,13 @@ class MyServerProtocol(WebSocketServerProtocol):
                 self.game = MyServerProtocol.games[decoded_values[2]]
                 self.game.add_player(self)
             else:
-                self.updatePosition(move=decoded_values[3]) # receive move
+                self.updateMove(move=decoded_values[3]) # receive move
                 
 
             print(f"decoded values:\ntype: {decoded_values[1]}\nroomId: {decoded_values[2]}\nmove: {decoded_values[3]}")
             
         else:
             print("Text message received: {0}".format(payload.decode('utf8')))
-
-        # send message with new playerId
-        #payload = self.createMessage(self.playerId, 0, 1, 0, 0, 0)
-        #self.sendMessage(payload, isBinary)
 
     def onClose(self, wasClean, code, reason):
         MyServerProtocol.clients.discard(self)
@@ -75,15 +73,25 @@ class MyServerProtocol(WebSocketServerProtocol):
         return (playerId, type, roomId, move)
 
     def createMessage(self, playerId, angle, type, x, y, velocity):
-        integerValue = playerId * (256 * 256 * 256 * 256) + angle * 16777216 + type * 8388608 + x * 16384 + y * 32 + velocity
+        angle256 = int((angle / (2 * math.pi)) * 256)
+        integerValue = playerId * (256 * 256 * 256 * 256) + angle256 * 16777216 + type * 8388608 + x * 16384 + y * 32 + velocity
         print("integerValue:", integerValue)
         payload = integerValue.to_bytes(5, byteorder='little')
         return payload
 
-    def updatePosition(self, move):
+    def updateMove(self, move):
         if move == 0:
-            self.y += self.velocity
             self.increaseVelocity()
+        #elif 
+
+
+    def updateAngle(self, value):
+        self.angle = (self.angle + value) % (2 * math.pi)
+
+    def updatePosition(self):
+        self.x += self.velocity * math.sin(self.angle)
+        self.y += self.velocity * math.cos(self.angle)
+        print("POSITION:", self.x, self.y, "PLAYER_ID:", self.playerId)
 
     def increaseVelocity(self):
         self.velocity = min(MAX_VELOCITY, self.velocity + 1)
