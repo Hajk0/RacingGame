@@ -36,14 +36,11 @@ function App() {
                 if (message.type === 1) {
                     if (message.velocity === 31) {
                         cars.current = cars.current.filter((car) => car.id !== message.playerId)
-                        /*cars.current.forEach((car) => {
-                            if (car.id === message.playerId) {
-                                
-                            }
-                        })*/
                         return;
                     }
                     setPlayerId(message.playerId)
+                    //sessionStorage.setItem('playerId', 'hello') // to nie działa
+                    //console.log("SETTING UP SESSIONSTORAGE")
                 } else {
                     let found = false
                     cars.current.forEach((car) => {

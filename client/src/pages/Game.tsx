@@ -16,7 +16,7 @@ function Game(
     const pressedKeysRef = useRef<Set<string>>(new Set())
 
     useEffect(() => {
-        const carImg = new Image();
+        const carImg = new Image()
         carImg.src = '/src/assets/car_red_down.png'
         const canvas = canvasRef.current
         if (!canvas) {

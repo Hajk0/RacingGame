@@ -31,7 +31,7 @@ class MyServerProtocol(WebSocketServerProtocol):
         MyServerProtocol.clients.add(self)
 
     def onMessage(self, payload, isBinary):
-        if isBinary:
+        if isBinary: # dodaj przyjmowanie pozycji od klienta żeby odtworzyć stan przed refreshem
             byte_values = list(payload)
             decoded_values = self.decodeMessage(byte_values[0])
             if decoded_values[1] == 1:
@@ -42,6 +42,7 @@ class MyServerProtocol(WebSocketServerProtocol):
                     MyServerProtocol.games[decoded_values[2]] = Game(decoded_values[2])
                 self.game = MyServerProtocol.games[decoded_values[2]]
                 self.game.add_player(self)
+                payload = self.createMessage(self.playerId, 0, 1, 0, self.roomId, 0)
             else:
                 self.updateMove(move=decoded_values[3]) # receive move
                 

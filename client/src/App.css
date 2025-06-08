@@ -48,6 +48,7 @@ canvas {
   margin: 0;
   padding: 0;
   border: 0;
-  background: white;
-  image-rendering: pixelated;
+  background: url('/src/assets/track.png');
+  background-size: cover;
+  image-rendering: crisp-edges;
 }
