@@ -51,4 +51,5 @@ canvas {
   background: url('/src/assets/track.png');
   background-size: cover;
   image-rendering: crisp-edges;
+  border: 3px solid green;
 }

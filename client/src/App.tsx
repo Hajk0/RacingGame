@@ -2,30 +2,32 @@ import './App.css'
 import { Routes, Route, BrowserRouter } from "react-router-dom"
 import Menu from "./pages/Menu"
 import Game, { type CarState } from './pages/Game'
-import { useRef, useState } from 'react'
+import { useEffect, useRef, useState } from 'react'
 
 function App() {
-  const [socket, setSocket] = useState<WebSocket | null>(null)
+  //const [socket, setSocket] = useState<WebSocket | null>(null)
+  const socket = useRef<WebSocket | null>(null)
   const [playerId, setPlayerId] = useState(-1)
   //const [cars, setCars] = useState<CarState[]>([]);
   const cars = useRef<CarState[]>([])
 
-  function initWebSocket(roomId: number): WebSocket {
-    if (socket && socket.readyState !== WebSocket.CLOSED) {
-        return socket
+  function initWebSocket(roomId: number, playerId: number, reconnect: number): WebSocket {
+    if (socket.current && socket.current.readyState !== WebSocket.CLOSED) {
+        console.log("SOCKET ISTNIEJE")
+        return socket.current
     }
 
     const ws = new WebSocket('ws://localhost:8000')
     ws.binaryType = 'arraybuffer'
 
-    ws.onopen = function(e) { onOpen(roomId, e) };
+    ws.onopen = function(e) { onOpen(roomId, playerId, reconnect, e) };
     ws.onclose = function(e) { onClose(e) };
     ws.onmessage = function(e) { onMessage(e) };
     ws.onerror = function(e) { onError(e) };
 
-    function onOpen(roomId: number, e: Event) {
+    function onOpen(roomId: number, playerId: number, reconnect: number, e: Event) {
         console.log(e.type);
-        const binary = createJoinMessage(roomId)
+        const binary = createJoinMessage(playerId, roomId, reconnect)
         const buffer = new Uint8Array([binary])
         ws.send(buffer);
     }
@@ -39,8 +41,9 @@ function App() {
                         return;
                     }
                     setPlayerId(message.playerId)
-                    //sessionStorage.setItem('playerId', 'hello') // to nie działa
-                    //console.log("SETTING UP SESSIONSTORAGE")
+                    sessionStorage.setItem('playerId', message.playerId.toString())
+                    sessionStorage.setItem('roomId', message.angle.toString())
+                    console.log("SETTING UP SESSIONSTORAGE")
                 } else {
                     let found = false
                     cars.current.forEach((car) => {
@@ -82,8 +85,8 @@ function App() {
         console.log("connection error")
     }
 
-    function createJoinMessage(roomId: number): number {
-        return (128 + roomId * 8)
+    function createJoinMessage(playerId: number, roomId: number, reconnect: number): number {
+        return (playerId * 256 + 128 + roomId * 8 + reconnect)
     }
 
     function decodeMessage(data: ArrayBuffer): {
@@ -132,7 +135,8 @@ function App() {
     }
 
 
-    setSocket(ws)
+    //setSocket(ws)
+    socket.current = ws
     return ws
   }
 
@@ -142,7 +146,7 @@ function App() {
     <BrowserRouter>
       <Routes>
         <Route index element={<Menu initWebSocket={initWebSocket} />} />
-        <Route path='race' element={<Game socket={socket} playerId={playerId} cars={cars} />} />
+        <Route path='race' element={<Game socket={socket.current} playerId={playerId} cars={cars} initWebSocket={initWebSocket} />} />
       </Routes>
 
     </BrowserRouter>

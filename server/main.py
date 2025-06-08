@@ -35,14 +35,19 @@ class MyServerProtocol(WebSocketServerProtocol):
             byte_values = list(payload)
             decoded_values = self.decodeMessage(byte_values[0])
             if decoded_values[1] == 1:
-                self.playerId = MyServerProtocol.freePlayerIds.pop()
+                if decoded_values[3] == 1:
+                    self.playerId = decoded_values[0]
+                else:
+                    self.playerId = MyServerProtocol.freePlayerIds.pop()
                 print("new playerId:", self.playerId)
                 self.roomId = decoded_values[2]
                 if decoded_values[2] not in MyServerProtocol.games:
                     MyServerProtocol.games[decoded_values[2]] = Game(decoded_values[2])
                 self.game = MyServerProtocol.games[decoded_values[2]]
                 self.game.add_player(self)
-                payload = self.createMessage(self.playerId, 0, 1, 0, self.roomId, 0)
+                print("roomId", self.roomId)
+                payload = self.createInfoMessage(int(self.playerId), int(self.roomId), 1, 0, 0, 0)
+                self.sendMessage(payload, isBinary=True)
             else:
                 self.updateMove(move=decoded_values[3]) # receive move
                 
@@ -77,6 +82,11 @@ class MyServerProtocol(WebSocketServerProtocol):
             byte_value -= roomId * 8
         move = byte_value
         return (playerId, type, roomId, move)
+
+    def createInfoMessage(self, bit8_1, bit8_2, bit1_3, bit9_4, bit9_5, bit5_6):
+        integerValue = bit8_1 * (256 * 256 * 256 * 256) + bit8_2 * 16777216 + bit1_3 * 8388608 + bit9_4 * 16384 + bit9_5 * 32 + bit5_6
+        payload = integerValue.to_bytes(5, byteorder='little')
+        return payload
 
     def createMessage(self, playerId, angle, type, x, y, velocity):
         angle256 = int((angle / (2 * math.pi)) * 256)

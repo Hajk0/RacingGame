@@ -9,14 +9,14 @@ function Menu(props: any) {
   const navigate = useNavigate()
 
   function startGame(roomId: Number) {
-    props.initWebSocket(roomId)
+    props.initWebSocket(roomId, 0, 0)
     navigate('/race')
   }
   
 
   return (
     <>
-      <h1>Siemano</h1>
+      <h1>Very Realistic Racing Game</h1>
       <div className="card">
         <input 
           type='number' 

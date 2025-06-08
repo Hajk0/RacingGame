@@ -1,4 +1,5 @@
 import { useEffect, useRef, useState, type RefObject } from 'react'
+import { useNavigate } from 'react-router-dom';
 
 export interface CarState {
   id: number;
@@ -9,11 +10,23 @@ export interface CarState {
 }
 
 function Game(
-    { socket, playerId, cars }: 
-    { socket: WebSocket | null, playerId: number, cars: RefObject<CarState[]> },
+    { socket, playerId, cars, initWebSocket }: 
+    { socket: WebSocket | null, playerId: number, cars: RefObject<CarState[]>, initWebSocket: Function },
 ) {
     const canvasRef = useRef<HTMLCanvasElement>(null)
     const pressedKeysRef = useRef<Set<string>>(new Set())
+
+    useEffect(() => {
+        if (socket == null) {
+            const playerIdString = sessionStorage.getItem("playerId")
+            const roomIdString = sessionStorage.getItem("roomId")
+            if (roomIdString && playerIdString) {
+                const playerIdInt = parseInt(playerIdString)
+                const roomId = parseInt(roomIdString)
+                initWebSocket(roomId, playerIdInt, 1)
+            }
+        }
+    }, [])
 
     useEffect(() => {
         const carImg = new Image()
@@ -24,11 +37,6 @@ function Game(
             return
         }
 
-        // Event listeners
-        canvas.addEventListener('click', (e) => {
-            handleMove(playerId, 0, 0)
-        });
-        //
 
         const ctx = canvas.getContext('2d')
         if (!ctx) {
@@ -108,11 +116,25 @@ function Game(
             console.log("socket nie działa")
         }
     }
+
+    const navigate = useNavigate()
+
+    function handleExit() {
+        if (socket != null) {
+            socket.close()
+            const playerIdString = sessionStorage.getItem("playerId")
+            if (playerIdString) {
+                const playerIdInt = parseInt(playerIdString)
+                cars.current = cars.current.filter((car) => car.id !== playerIdInt)
+            }
+        }
+        navigate("/")
+    }
     
 
   return (
     <>
-      <button onClick={() => console.log("Exit to implement")}>Exit</button>
+      <button onClick={handleExit}>Exit</button>
       <canvas ref={canvasRef} width={512} height={512} />
     </>
   )
