@@ -13,6 +13,7 @@ function Game(
     { socket: WebSocket | null, playerId: number, cars: RefObject<CarState[]> },
 ) {
     const canvasRef = useRef<HTMLCanvasElement>(null)
+    const pressedKeysRef = useRef<Set<string>>(new Set())
 
     useEffect(() => {
         const carImg = new Image();
@@ -26,10 +27,6 @@ function Game(
         // Event listeners
         canvas.addEventListener('click', (e) => {
             handleMove(playerId, 0, 0)
-            const rect = canvas.getBoundingClientRect();
-            const x = e.clientX - rect.left;
-            const y = e.clientY - rect.top;
-            console.log(`Mouse clicked at: ${x}, ${y}`);
         });
         //
 
@@ -43,16 +40,17 @@ function Game(
             ctx.fillStyle = 'white'
             ctx.clearRect(0, 0, canvas.width, canvas.height)
 
-            let i = 0
+            //let i = 0
             cars.current.forEach((car) => {
                 ctx.save()
                 ctx.translate(car.x, car.y)
                 ctx.rotate((car.angle * Math.PI) / 128) // z 256 na radiany
+                ctx.translate(-car.x, -car.y)
 
                 ctx.drawImage(carImg, -10, -20, 20, 40)
 
                 ctx.restore();
-                console.log("iteration foreach HERE!!!", i++)
+                //console.log("iteration foreach HERE!!!", i++)
             })
 
             requestAnimationFrame(draw)
@@ -60,6 +58,35 @@ function Game(
 
         draw()
     }, [])
+
+    useEffect(() => {
+    const handleKeyDown = (e: KeyboardEvent) => {
+        pressedKeysRef.current.add(e.key.toLowerCase());
+    };
+
+    const handleKeyUp = (e: KeyboardEvent) => {
+        pressedKeysRef.current.delete(e.key.toLowerCase());
+    };
+
+    window.addEventListener('keydown', handleKeyDown);
+    window.addEventListener('keyup', handleKeyUp);
+
+    const interval = setInterval(() => {
+        const keys = pressedKeysRef.current;
+
+        if (keys.has('w')) handleMove(playerId, 0, 0);
+        if (keys.has('d')) handleMove(playerId, 0, 2);
+        if (keys.has('a')) handleMove(playerId, 0, 6);
+        if (keys.has('s')) handleMove(playerId, 0, 4);
+    }, 200);
+
+    return () => {
+        window.removeEventListener('keydown', handleKeyDown);
+        window.removeEventListener('keyup', handleKeyUp);
+        clearInterval(interval);
+    };
+    }, [playerId, socket]);
+
 
     function createMoveMessage(playerId: number, roomId: number, moveCode: number) {
         return (playerId * 256 + roomId * 8 + moveCode)

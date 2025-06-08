@@ -44,7 +44,7 @@ class MyServerProtocol(WebSocketServerProtocol):
                 self.updateMove(move=decoded_values[3]) # receive move
                 
 
-            print(f"decoded values:\ntype: {decoded_values[1]}\nroomId: {decoded_values[2]}\nmove: {decoded_values[3]}")
+            #print(f"decoded values:\ntype: {decoded_values[1]}\nroomId: {decoded_values[2]}\nmove: {decoded_values[3]}")
             
         else:
             print("Text message received: {0}".format(payload.decode('utf8')))
@@ -74,15 +74,19 @@ class MyServerProtocol(WebSocketServerProtocol):
 
     def createMessage(self, playerId, angle, type, x, y, velocity):
         angle256 = int((angle / (2 * math.pi)) * 256)
-        integerValue = playerId * (256 * 256 * 256 * 256) + angle256 * 16777216 + type * 8388608 + x * 16384 + y * 32 + velocity
+        intX = int(x)
+        intY = int(y)
+        intVelocity = int(velocity)
+        integerValue = playerId * (256 * 256 * 256 * 256) + angle256 * 16777216 + type * 8388608 + intX * 16384 + intY * 32 + intVelocity
         print("integerValue:", integerValue)
         payload = integerValue.to_bytes(5, byteorder='little')
         return payload
 
     def updateMove(self, move):
         if move == 0:
-            self.increaseVelocity()
-        #elif 
+            self.increaseVelocity(1)
+        elif move == 2:
+            self.turnRight()
 
 
     def updateAngle(self, value):
@@ -91,10 +95,18 @@ class MyServerProtocol(WebSocketServerProtocol):
     def updatePosition(self):
         self.x += self.velocity * math.sin(self.angle)
         self.y += self.velocity * math.cos(self.angle)
-        print("POSITION:", self.x, self.y, "PLAYER_ID:", self.playerId)
+        #self.decreaseVelocityByFriction()
+        print("POSITION:", self.x, self.y, "PLAYER_ID:", self.playerId, "ANGLE:", self.angle)
 
-    def increaseVelocity(self):
-        self.velocity = min(MAX_VELOCITY, self.velocity + 1)
+    def increaseVelocity(self, value):
+        self.velocity = min(MAX_VELOCITY, self.velocity + value)
+
+    def decreaseVelocityByFriction(self):
+        self.velocity = max(MIN_VELOCITY, self.velocity - 1)
+
+    def turnRight(self):
+        turnSpeed = 0.05
+        self.angle = (self.angle + turnSpeed * self.velocity) % (2 * math.pi)
 
 
 def game_loop():
@@ -115,7 +127,7 @@ if __name__ == '__main__':
     factory = WebSocketServerFactory("ws://0.0.0.0:8000/ws")
     factory.protocol = MyServerProtocol
     lc = LoopingCall(game_loop)
-    lc.start(0.2)
+    lc.start(0.5)
     reactor.listenTCP(8000, factory)
     reactor.run()
     

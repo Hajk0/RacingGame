@@ -45,7 +45,7 @@ function App() {
                             car.x = message.x
                             car.y = message.y
                             car.velocity = message.velocity
-                            console.log("Modify Car")
+                            //console.log("Modify Car")
                         }
                     })
                     if (!found) {
@@ -59,7 +59,7 @@ function App() {
                         console.log("Add Car")
                     }
                 }
-                console.log("od servera binary")
+                //console.log("od servera binary")
             } else {
                 console.log(e.type + ': '  + e.data);
                 console.log("od servera text")
@@ -94,7 +94,6 @@ function App() {
             const view = new DataView(data)
             playerId = view.getUint8(4)
             value = view.getUint32(0, true)
-            console.log("Parsed uint32:", value)
         } else {
             console.warn("Unexpected byte length", buffer.length)
         }
@@ -115,12 +114,12 @@ function App() {
             value -= y * 32
         }
         const velocity = value
-        console.log("playerId:", playerId)
+        /*console.log("playerId:", playerId)
         console.log("angle:", angle)
         console.log("type:", type)
         console.log("x:", x)
         console.log("y:", y)
-        console.log("velocity:", velocity)
+        console.log("velocity:", velocity)*/
 
         return {playerId, angle, type, x, y, velocity}
     }
