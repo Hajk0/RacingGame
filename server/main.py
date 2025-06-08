@@ -4,6 +4,8 @@ from Game import Game
 
 MAX_VELOCITY = 31
 MIN_VELOCITY = 0
+MAX_POSITION = 511
+MIN_POSITION = 0
 
 class MyServerProtocol(WebSocketServerProtocol):
     clients = set()
@@ -54,6 +56,9 @@ class MyServerProtocol(WebSocketServerProtocol):
         if self.game:
             self.game.remove_player(self)
             MyServerProtocol.freePlayerIds.add(self.playerId)
+            payload = self.createMessage(self.playerId, 0, 1, 0, 0, 31)
+            for player in self.game.players:
+                player.sendMessage(payload, isBinary=True)
         print("WebSocket connection closed: {0}".format(reason))
 
     def decodeMessage(self, byte_value):
@@ -110,8 +115,10 @@ class MyServerProtocol(WebSocketServerProtocol):
         self.angle = (self.angle + value) % (2 * math.pi)
 
     def updatePosition(self):
-        self.x += self.velocity * math.sin(self.angle)# + -> start upwards
-        self.y -= self.velocity * math.cos(self.angle)# - -> start upwards
+        self.x = max(min(self.x + self.velocity * math.sin(self.angle), MAX_POSITION), MIN_POSITION)
+        #self.x += self.velocity * math.sin(self.angle)# + -> start upwards
+        self.y = max(min(self.y - self.velocity* math.cos(self.angle), MAX_POSITION), MIN_POSITION)
+        #self.y -= self.velocity * math.cos(self.angle)# - -> start upwards
         self.decreaseVelocityByFriction()
         #print("POSITION:", self.x, self.y, "PLAYER_ID:", self.playerId, "ANGLE:", self.angle)
 

@@ -34,6 +34,15 @@ function App() {
         if (e.data instanceof ArrayBuffer) {
                 const message = decodeMessage(e.data)
                 if (message.type === 1) {
+                    if (message.velocity === 31) {
+                        cars.current = cars.current.filter((car) => car.id !== message.playerId)
+                        /*cars.current.forEach((car) => {
+                            if (car.id === message.playerId) {
+                                
+                            }
+                        })*/
+                        return;
+                    }
                     setPlayerId(message.playerId)
                 } else {
                     let found = false
