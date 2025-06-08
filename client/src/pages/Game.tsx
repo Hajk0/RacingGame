@@ -45,7 +45,6 @@ function Game(
                 ctx.save()
                 ctx.translate(car.x, car.y)
                 ctx.rotate((car.angle * Math.PI) / 128) // z 256 na radiany
-                ctx.translate(-car.x, -car.y)
 
                 ctx.drawImage(carImg, -10, -20, 20, 40)
 
@@ -53,38 +52,45 @@ function Game(
                 //console.log("iteration foreach HERE!!!", i++)
             })
 
-            requestAnimationFrame(draw)
+            setTimeout(() => {
+                requestAnimationFrame(draw)
+            }, 100)
         }
 
         draw()
     }, [])
 
     useEffect(() => {
-    const handleKeyDown = (e: KeyboardEvent) => {
-        pressedKeysRef.current.add(e.key.toLowerCase());
-    };
+        const handleKeyDown = (e: KeyboardEvent) => {
+            if (pressedKeysRef.current.size < 2) {
+                pressedKeysRef.current.add(e.key.toLowerCase());
+            }
+        };
 
-    const handleKeyUp = (e: KeyboardEvent) => {
-        pressedKeysRef.current.delete(e.key.toLowerCase());
-    };
+        const handleKeyUp = (e: KeyboardEvent) => {
+            pressedKeysRef.current.delete(e.key.toLowerCase());
+        };
 
-    window.addEventListener('keydown', handleKeyDown);
-    window.addEventListener('keyup', handleKeyUp);
+        window.addEventListener('keydown', handleKeyDown);
+        window.addEventListener('keyup', handleKeyUp);
 
-    const interval = setInterval(() => {
-        const keys = pressedKeysRef.current;
+        const interval = setInterval(() => {
+            const keys = pressedKeysRef.current;
+            if (keys.has('w') && keys.has('d')) handleMove(playerId, 0, 1)
+            else if (keys.has('d') && keys.has('s')) handleMove(playerId, 0, 3)
+            else if (keys.has('s') && keys.has('a')) handleMove(playerId, 0, 5)
+            else if (keys.has('a') && keys.has('w')) handleMove(playerId, 0, 7)
+            else if (keys.has('w')) handleMove(playerId, 0, 0);
+            else if (keys.has('d')) handleMove(playerId, 0, 2);
+            else if (keys.has('a')) handleMove(playerId, 0, 6);
+            else if (keys.has('s')) handleMove(playerId, 0, 4);
+        }, 50);
 
-        if (keys.has('w')) handleMove(playerId, 0, 0);
-        if (keys.has('d')) handleMove(playerId, 0, 2);
-        if (keys.has('a')) handleMove(playerId, 0, 6);
-        if (keys.has('s')) handleMove(playerId, 0, 4);
-    }, 200);
-
-    return () => {
-        window.removeEventListener('keydown', handleKeyDown);
-        window.removeEventListener('keyup', handleKeyUp);
-        clearInterval(interval);
-    };
+        return () => {
+            window.removeEventListener('keydown', handleKeyDown);
+            window.removeEventListener('keyup', handleKeyUp);
+            clearInterval(interval);
+        };
     }, [playerId, socket]);
 
 
@@ -103,14 +109,11 @@ function Game(
         }
     }
     
-      /*<h1>Game Page</h1>
-      <button onClick={() => handleMove(playerId, 0, 0)}>W</button>
-      <button onClick={() => handleMove(playerId, 0, 1)}>WD</button>
-      <button onClick={() => handleMove(playerId, 0, 2)}>D</button>*/
 
   return (
     <>
-      <canvas ref={canvasRef} width={800} height={600} />
+      <button onClick={() => console.log("Exit to implement")}>Exit</button>
+      <canvas ref={canvasRef} width={512} height={512} />
     </>
   )
 }

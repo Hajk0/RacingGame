@@ -46,6 +46,7 @@ function App() {
                             car.y = message.y
                             car.velocity = message.velocity
                             //console.log("Modify Car")
+                            //console.log(car)
                         }
                     })
                     if (!found) {
@@ -114,12 +115,12 @@ function App() {
             value -= y * 32
         }
         const velocity = value
-        /*console.log("playerId:", playerId)
+        console.log("playerId:", playerId)
         console.log("angle:", angle)
         console.log("type:", type)
         console.log("x:", x)
         console.log("y:", y)
-        console.log("velocity:", velocity)*/
+        console.log("velocity:", velocity)
 
         return {playerId, angle, type, x, y, velocity}
     }

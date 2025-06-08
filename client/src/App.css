@@ -49,4 +49,5 @@ canvas {
   padding: 0;
   border: 0;
   background: white;
+  image-rendering: pixelated;
 }

@@ -14,7 +14,10 @@ class Game:
 
     def createMessage(self, playerId, angle, type, x, y, velocity):
         angle256 = int((angle / (2 * math.pi)) * 256)
-        integerValue = int(playerId * (256 * 256 * 256 * 256) + angle256 * 16777216 + type * 8388608 + x * 16384 + y * 32 + velocity)
+        intX = int(x)
+        intY = int(y)
+        intVelocity = int(velocity)
+        integerValue = int(playerId * (256 * 256 * 256 * 256) + angle256 * 16777216 + type * 8388608 + intX * 16384 + intY * 32 + intVelocity)
         payload = integerValue.to_bytes(5, byteorder='little')
         return payload
 
