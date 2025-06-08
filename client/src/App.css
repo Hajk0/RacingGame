@@ -51,5 +51,22 @@ canvas {
   background: url('/src/assets/track.png');
   background-size: cover;
   image-rendering: crisp-edges;
-  border: 3px solid green;
+  border: 3px solid #747bff;
+}
+
+.input-field {
+  padding: 10px;
+  border: 1px solid #f9f9f9;
+  border-radius: 8px;
+  font-size: 16px;
+  font-weight: 600;
+  outline: none;
+  width: 100px;
+  margin-bottom: 10px;
+  background-color: #747bff;
+  color: #1a1a1a;
+}
+
+.exit-button {
+  margin: 5px;
 }

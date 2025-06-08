@@ -134,7 +134,7 @@ function Game(
 
   return (
     <>
-      <button onClick={handleExit}>Exit</button>
+      <button onClick={handleExit} className='exit-button'>Exit</button>
       <canvas ref={canvasRef} width={512} height={512} />
     </>
   )
