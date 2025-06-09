@@ -11,19 +11,21 @@ export interface CarState {
 
 function Game(
     { socket, playerId, cars, initWebSocket }: 
-    { socket: WebSocket | null, playerId: number, cars: RefObject<CarState[]>, initWebSocket: Function },
+    { socket: WebSocket | null, playerId: RefObject<number>, cars: RefObject<CarState[]>, initWebSocket: Function },
 ) {
     const canvasRef = useRef<HTMLCanvasElement>(null)
     const pressedKeysRef = useRef<Set<string>>(new Set())
 
-    useEffect(() => {
+    useEffect(() => { // reconnecting
         if (socket == null) {
+            //debugger
             const playerIdString = sessionStorage.getItem("playerId")
             const roomIdString = sessionStorage.getItem("roomId")
             if (roomIdString && playerIdString) {
                 const playerIdInt = parseInt(playerIdString)
+                //playerId.current = playerIdInt
                 const roomId = parseInt(roomIdString)
-                initWebSocket(roomId, playerIdInt, 1)
+                socket = initWebSocket(roomId, playerIdInt, 1)
             }
         }
     }, [])
@@ -50,6 +52,12 @@ function Game(
 
             //let i = 0
             cars.current.forEach((car) => {
+                if (car.id === playerId.current) {
+                    sessionStorage.setItem('carX', car.x.toString())
+                    sessionStorage.setItem('carY', car.y.toString())
+                    sessionStorage.setItem('angle', car.angle.toString())
+                }
+
                 ctx.save()
                 ctx.translate(car.x, car.y)
                 ctx.rotate((car.angle * Math.PI) / 128) // z 256 na radiany
@@ -84,14 +92,14 @@ function Game(
 
         const interval = setInterval(() => {
             const keys = pressedKeysRef.current;
-            if (keys.has('w') && keys.has('d')) handleMove(playerId, 0, 1)
-            else if (keys.has('d') && keys.has('s')) handleMove(playerId, 0, 3)
-            else if (keys.has('s') && keys.has('a')) handleMove(playerId, 0, 5)
-            else if (keys.has('a') && keys.has('w')) handleMove(playerId, 0, 7)
-            else if (keys.has('w')) handleMove(playerId, 0, 0);
-            else if (keys.has('d')) handleMove(playerId, 0, 2);
-            else if (keys.has('a')) handleMove(playerId, 0, 6);
-            else if (keys.has('s')) handleMove(playerId, 0, 4);
+            if (keys.has('w') && keys.has('d')) handleMove(playerId.current, 0, 1)
+            else if (keys.has('d') && keys.has('s')) handleMove(playerId.current, 0, 3)
+            else if (keys.has('s') && keys.has('a')) handleMove(playerId.current, 0, 5)
+            else if (keys.has('a') && keys.has('w')) handleMove(playerId.current, 0, 7)
+            else if (keys.has('w')) handleMove(playerId.current, 0, 0);
+            else if (keys.has('d')) handleMove(playerId.current, 0, 2);
+            else if (keys.has('a')) handleMove(playerId.current, 0, 6);
+            else if (keys.has('s')) handleMove(playerId.current, 0, 4);
         }, 50);
 
         return () => {
@@ -109,7 +117,7 @@ function Game(
     function handleMove(playerId: number, roomId: number, moveCode: number) {
         const binary = createMoveMessage(playerId, roomId, moveCode)
 
-        const buffer = new Uint8Array([binary])
+        const buffer = new Uint16Array([binary])
         if (socket != null) {
             socket.send(buffer);
         } else {
@@ -123,12 +131,23 @@ function Game(
         if (socket != null) {
             socket.close()
             const playerIdString = sessionStorage.getItem("playerId")
-            if (playerIdString) {
+            /*if (playerIdString) {
                 const playerIdInt = parseInt(playerIdString)
                 cars.current = cars.current.filter((car) => car.id !== playerIdInt)
-            }
+            }*/
+            cars.current = []
         }
         navigate("/")
+    }
+
+    function createPositionMessage(position: number, dimetion: number): number {
+        let firstbit = 0
+        if (position >= 256) {
+            firstbit = Math.floor(position / 256)
+            position -= firstbit * 256
+        }
+        const last8bits = position
+        return (last8bits * 256 + 128 + firstbit * 8 + dimetion)
     }
     
 

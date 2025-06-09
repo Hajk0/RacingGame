@@ -10,7 +10,7 @@ function Menu(props: any) {
   const navigate = useNavigate()
 
   function startGame(roomId: number) {
-    if (roomId < 0 || roomId > 15) {
+    if (roomId < 0 || roomId > 15 || roomIdString === '') {
       setErrorMessage('Room ID must be between 0 and 15.')
       return
     }

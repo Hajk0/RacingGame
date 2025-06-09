@@ -31,28 +31,46 @@ class MyServerProtocol(WebSocketServerProtocol):
         MyServerProtocol.clients.add(self)
 
     def onMessage(self, payload, isBinary):
-        if isBinary: # dodaj przyjmowanie pozycji od klienta żeby odtworzyć stan przed refreshem
+        if isBinary:
             byte_values = list(payload)
+            print(byte_values)
             decoded_values = self.decodeMessage(byte_values[0])
-            if decoded_values[1] == 1:
-                if decoded_values[3] == 1:
-                    self.playerId = decoded_values[0]
-                else:
+            # decoded_values[0] = byte_values[0]
+            print("decoded_values", decoded_values)
+            if decoded_values[1] == 1: # konfiguracyjne
+                if decoded_values[3] == 2: # pozycja x z sessionStorage
+                    refreshedX = 256 * decoded_values[2] + byte_values[1]
+                    print("refreshedX:", refreshedX)
+                    self.x = refreshedX
+                    return
+                if decoded_values[3] == 3: # pozycja y z sessionStorage
+                    refreshedY = 256 * decoded_values[2] + byte_values[1] # do bytevalues[0] wchodzi 1 bit
+                    self.y = refreshedY
+                    return
+                if decoded_values[3] == 4: # angle z sessionStorage
+                    refreshedAngle = byte_values[1]
+                    self.angle = (float(refreshedAngle) * math.pi) / 128.0
+                    return
+                if decoded_values[3] == 1: # jesli refresh
+                    self.playerId = byte_values[1]
+                    print("refresh player:", self.playerId)
+                else: # jesli nowy gracz
                     self.playerId = MyServerProtocol.freePlayerIds.pop()
-                print("new playerId:", self.playerId)
+                    print("new playerId:", self.playerId)
                 self.roomId = decoded_values[2]
                 if decoded_values[2] not in MyServerProtocol.games:
                     MyServerProtocol.games[decoded_values[2]] = Game(decoded_values[2])
+                    print("tworzę pokój:", decoded_values[2])
                 self.game = MyServerProtocol.games[decoded_values[2]]
                 self.game.add_player(self)
-                print("roomId", self.roomId)
+                print("Dodaje do roomId", self.roomId)
                 payload = self.createInfoMessage(int(self.playerId), int(self.roomId), 1, 0, 0, 0)
                 self.sendMessage(payload, isBinary=True)
             else:
                 self.updateMove(move=decoded_values[3]) # receive move
                 
 
-            #print(f"decoded values:\ntype: {decoded_values[1]}\nroomId: {decoded_values[2]}\nmove: {decoded_values[3]}")
+            print(f"decoded values:\ntype: {decoded_values[1]}\nroomId: {decoded_values[2]}\nmove: {decoded_values[3]}")
             
         else:
             print("Text message received: {0}".format(payload.decode('utf8')))

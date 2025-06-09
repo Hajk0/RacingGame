@@ -7,7 +7,8 @@ import { useEffect, useRef, useState } from 'react'
 function App() {
   //const [socket, setSocket] = useState<WebSocket | null>(null)
   const socket = useRef<WebSocket | null>(null)
-  const [playerId, setPlayerId] = useState(-1)
+  //const [playerId, setPlayerId] = useState(-1)
+  const playerIdRef = useRef(-1)
   //const [cars, setCars] = useState<CarState[]>([]);
   const cars = useRef<CarState[]>([])
 
@@ -27,9 +28,47 @@ function App() {
 
     function onOpen(roomId: number, playerId: number, reconnect: number, e: Event) {
         console.log(e.type);
+        //debugger
         const binary = createJoinMessage(playerId, roomId, reconnect)
-        const buffer = new Uint8Array([binary])
+        console.log("reconnect number:", reconnect)
+        const buffer = new Uint16Array([binary])
         ws.send(buffer);
+        if (reconnect) {
+            const playerIdString = sessionStorage.getItem("playerId")
+            const roomIdString = sessionStorage.getItem("roomId")
+            const carXString = sessionStorage.getItem('carX')
+            const carYString = sessionStorage.getItem('carY')
+            const angleString = sessionStorage.getItem('angle')
+            if (roomIdString && playerIdString) {
+                console.log("hello")
+                //const playerIdInt = parseInt(playerIdString)
+                //playerIdRef.current = playerIdInt
+                
+                if (carXString && carYString && angleString && socket) {
+                    console.log("hello 2")
+                    const carXInt = parseInt(carXString)
+                    const carYInt = parseInt(carYString)
+                    const angleInt = parseInt(angleString)
+                    console.log(carXInt, carYInt, angleInt)
+
+                    if (carXInt >= 0 && carXInt <= 511) { // gdyby ktoś zmienił sessionStorage
+                        const binaryX = createPositionMessage(carXInt, 2)
+                        const bufferX = new Uint16Array([binaryX])
+                        ws.send(bufferX);
+                    }
+                    if (carYInt >= 0 && carYInt <= 511) { // gdyby ktoś zmienił sessionStorage
+                        const binaryY = createPositionMessage(carYInt, 3)
+                        const bufferY = new Uint16Array([binaryY])
+                        ws.send(bufferY);
+                    }
+                    if (angleInt >= 0 && angleInt <= 255) { // gdyby ktoś zmienił sessionStorage
+                        const binaryAngle = createPositionMessage(angleInt, 4)
+                        const bufferAngle = new Uint16Array([binaryAngle])
+                        ws.send(bufferAngle);
+                    }
+                }
+            }
+        }
     }
     
     function onMessage(e: MessageEvent<any>) {
@@ -40,7 +79,9 @@ function App() {
                         cars.current = cars.current.filter((car) => car.id !== message.playerId)
                         return;
                     }
-                    setPlayerId(message.playerId)
+                    //setPlayerId(message.playerId)
+                    playerIdRef.current = message.playerId
+                    playerId = message.playerId
                     sessionStorage.setItem('playerId', message.playerId.toString())
                     sessionStorage.setItem('roomId', message.angle.toString())
                     console.log("SETTING UP SESSIONSTORAGE")
@@ -124,12 +165,12 @@ function App() {
             value -= y * 32
         }
         const velocity = value
-        console.log("playerId:", playerId)
+        /*console.log("playerId:", playerId)
         console.log("angle:", angle)
         console.log("type:", type)
         console.log("x:", x)
         console.log("y:", y)
-        console.log("velocity:", velocity)
+        console.log("velocity:", velocity)*/
 
         return {playerId, angle, type, x, y, velocity}
     }
@@ -140,13 +181,23 @@ function App() {
     return ws
   }
 
+    function createPositionMessage(position: number, dimetion: number): number {
+        let firstbit = 0
+        if (position >= 256) {
+            firstbit = 1
+            position -= 256
+        }
+        const last8bits = position
+        console.log("last8bits", last8bits)
+        return (last8bits * 256 + 128 + firstbit * 8 + dimetion)
+    }
 
 
   return (
     <BrowserRouter>
       <Routes>
         <Route index element={<Menu initWebSocket={initWebSocket} />} />
-        <Route path='race' element={<Game socket={socket.current} playerId={playerId} cars={cars} initWebSocket={initWebSocket} />} />
+        <Route path='race' element={<Game socket={socket.current} playerId={playerIdRef} cars={cars} initWebSocket={initWebSocket} />} />
       </Routes>
 
     </BrowserRouter>
