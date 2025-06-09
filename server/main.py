@@ -33,14 +33,14 @@ class MyServerProtocol(WebSocketServerProtocol):
     def onMessage(self, payload, isBinary):
         if isBinary:
             byte_values = list(payload)
-            print(byte_values)
+            #print(byte_values)
             decoded_values = self.decodeMessage(byte_values[0])
             # decoded_values[0] = byte_values[0]
-            print("decoded_values", decoded_values)
+            #print("decoded_values", decoded_values)
             if decoded_values[1] == 1: # konfiguracyjne
                 if decoded_values[3] == 2: # pozycja x z sessionStorage
                     refreshedX = 256 * decoded_values[2] + byte_values[1]
-                    print("refreshedX:", refreshedX)
+                    # print("refreshedX:", refreshedX)
                     self.x = refreshedX
                     return
                 if decoded_values[3] == 3: # pozycja y z sessionStorage
@@ -53,10 +53,10 @@ class MyServerProtocol(WebSocketServerProtocol):
                     return
                 if decoded_values[3] == 1: # jesli refresh
                     self.playerId = byte_values[1]
-                    print("refresh player:", self.playerId)
+                    #print("refresh player:", self.playerId)
                 else: # jesli nowy gracz
                     self.playerId = MyServerProtocol.freePlayerIds.pop()
-                    print("new playerId:", self.playerId)
+                    # print("new playerId:", self.playerId)
                 self.roomId = decoded_values[2]
                 if decoded_values[2] not in MyServerProtocol.games:
                     MyServerProtocol.games[decoded_values[2]] = Game(decoded_values[2])
@@ -70,7 +70,7 @@ class MyServerProtocol(WebSocketServerProtocol):
                 self.updateMove(move=decoded_values[3]) # receive move
                 
 
-            print(f"decoded values:\ntype: {decoded_values[1]}\nroomId: {decoded_values[2]}\nmove: {decoded_values[3]}")
+            #print(f"decoded values:\ntype: {decoded_values[1]}\nroomId: {decoded_values[2]}\nmove: {decoded_values[3]}")
             
         else:
             print("Text message received: {0}".format(payload.decode('utf8')))
@@ -112,7 +112,7 @@ class MyServerProtocol(WebSocketServerProtocol):
         intY = int(y)
         intVelocity = int(velocity)
         integerValue = playerId * (256 * 256 * 256 * 256) + angle256 * 16777216 + type * 8388608 + intX * 16384 + intY * 32 + intVelocity
-        print("integerValue:", integerValue)
+        # print("integerValue:", integerValue)
         payload = integerValue.to_bytes(5, byteorder='little')
         return payload
 

@@ -197,7 +197,7 @@ function App() {
     <BrowserRouter>
       <Routes>
         <Route index element={<Menu initWebSocket={initWebSocket} />} />
-        <Route path='race' element={<Game socket={socket.current} playerId={playerIdRef} cars={cars} initWebSocket={initWebSocket} />} />
+        <Route path='race' element={<Game socket={socket} playerId={playerIdRef} cars={cars} initWebSocket={initWebSocket} />} />
       </Routes>
 
     </BrowserRouter>

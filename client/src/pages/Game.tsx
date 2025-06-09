@@ -11,13 +11,13 @@ export interface CarState {
 
 function Game(
     { socket, playerId, cars, initWebSocket }: 
-    { socket: WebSocket | null, playerId: RefObject<number>, cars: RefObject<CarState[]>, initWebSocket: Function },
+    { socket: RefObject<WebSocket | null>, playerId: RefObject<number>, cars: RefObject<CarState[]>, initWebSocket: Function },
 ) {
     const canvasRef = useRef<HTMLCanvasElement>(null)
     const pressedKeysRef = useRef<Set<string>>(new Set())
 
     useEffect(() => { // reconnecting
-        if (socket == null) {
+        if (socket.current == null) {
             //debugger
             const playerIdString = sessionStorage.getItem("playerId")
             const roomIdString = sessionStorage.getItem("roomId")
@@ -25,7 +25,7 @@ function Game(
                 const playerIdInt = parseInt(playerIdString)
                 //playerId.current = playerIdInt
                 const roomId = parseInt(roomIdString)
-                socket = initWebSocket(roomId, playerIdInt, 1)
+                socket.current = initWebSocket(roomId, playerIdInt, 1)
             }
         }
     }, [])
@@ -107,7 +107,7 @@ function Game(
             window.removeEventListener('keyup', handleKeyUp);
             clearInterval(interval);
         };
-    }, [playerId, socket]);
+    }, [playerId, socket.current]);
 
 
     function createMoveMessage(playerId: number, roomId: number, moveCode: number) {
@@ -118,8 +118,8 @@ function Game(
         const binary = createMoveMessage(playerId, roomId, moveCode)
 
         const buffer = new Uint16Array([binary])
-        if (socket != null) {
-            socket.send(buffer);
+        if (socket.current != null) {
+            socket.current.send(buffer);
         } else {
             console.log("socket nie działa")
         }
@@ -128,9 +128,9 @@ function Game(
     const navigate = useNavigate()
 
     function handleExit() {
-        if (socket != null) {
-            socket.close()
-            const playerIdString = sessionStorage.getItem("playerId")
+        if (socket.current != null) {
+            socket.current.close()
+            //const playerIdString = sessionStorage.getItem("playerId")
             /*if (playerIdString) {
                 const playerIdInt = parseInt(playerIdString)
                 cars.current = cars.current.filter((car) => car.id !== playerIdInt)
